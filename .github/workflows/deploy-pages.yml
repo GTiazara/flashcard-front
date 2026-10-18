@@ -1,0 +1,66 @@
+name: Deploy frontend to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # Valeur publique dans Settings > Secrets and variables > Actions > Variables.
+      VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+      VITE_ROUTER_MODE: hash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Configure Pages asset path
+        shell: bash
+        run: |
+          repo="${GITHUB_REPOSITORY#*/}"
+          if [[ "${repo,,}" == "${GITHUB_REPOSITORY_OWNER,,}.github.io" ]]; then
+            echo "VITE_BASE_PATH=/" >> "$GITHUB_ENV"
+          else
+            echo "VITE_BASE_PATH=/$repo/" >> "$GITHUB_ENV"
+          fi
+      - name: Validate production API URL
+        run: |
+          node --input-type=module <<'JS'
+          const value = process.env.VITE_API_BASE_URL;
+          if (!value) throw new Error('Configure repository variable VITE_API_BASE_URL with your public HTTPS backend URL ending in /api.');
+          const url = new URL(value);
+          if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash || !/\/api\/?$/.test(url.pathname) || /localhost|127\.0\.0\.1|votre-domaine|exemple\./i.test(url.hostname)) {
+            throw new Error('VITE_API_BASE_URL must be a real public HTTPS API URL ending in /api, without credentials.');
+          }
+          JS
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
