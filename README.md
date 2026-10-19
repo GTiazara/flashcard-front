@@ -108,6 +108,16 @@ Focus visible, lien d’évitement, champs et erreurs associés, boutons tactile
 
 ## Vérifier
 
+### Avant chaque commit
+
+`npm install` (ou `npm ci`) active automatiquement le hook Git Husky via `prepare`. Pour l'activer sur une installation existante, exécuter `npm run prepare` depuis ce dossier.
+
+Chaque `git commit` lance `npm run check` : tous les tests unitaires (`npm test`), puis la vérification TypeScript et le build de production (`npm run build`). Un échec bloque le commit ; corriger le problème et recommencer. Cette commande peut aussi être exécutée manuellement. Les contrôles portent sur les fichiers présents dans le répertoire de travail, pas uniquement les changements indexés ; après une correction, indexer à nouveau les fichiers concernés.
+
+Les tests E2E et d'intégration MongoDB restent séparés et ne sont pas exécutés par le hook. Le hook est une protection locale contournable ; les contrôles GitHub Actions restent nécessaires.
+
+### Commandes de validation
+
 Exécuter séquentiellement : `npm run build` (vue-tsc strict + Vite), `npm test`, `npx playwright install chromium` au premier lancement, puis `npm run test:e2e`.
 
 Les mocks HTTP sont **exclusivement** sous `tests/` : aucun mock dans le bundle applicatif. Playwright démarre son propre serveur Vite éphémère, l’arrête en fin de suite, et n’accède jamais à une base utilisateur. Projets Chromium desktop/mobile et vérification de largeur à 360, 768, 1280 px. Traces en cas d’échec sous `test-results/`.
