@@ -24,7 +24,7 @@ Depuis ce dossier : installer avec `npm install`, puis démarrer avec `npm run d
 
 Avec `NODE_ENV=development` côté backend et une `CORS_ORIGIN` loopback (par défaut `http://localhost:5173`), les origines `localhost`, `127.0.0.1` et `[::1]` sont équivalentes **uniquement à protocole et port identiques**. Cela autorise aussi **http://127.0.0.1:5173**, sans ouvrir les autres IP ou ports. En `test` et `production`, seule l’origine configurée exacte est acceptée. Conserver une URL de navigateur stable : les cookies restent propres à chaque hôte, sans transfert de session entre localhost et 127.0.0.1. Le proxy ne réécrit pas `Origin`.
 
-Le backend doit être lancé séparément sur **http://localhost:3000**, avec sa configuration MongoDB et son secret de session. Replica set/Atlas recommandé pour les transactions ; standalone accepté en mode dégradé mono-processus sans rollback, avec risque d’écritures partielles. Voir son contrat dans le dossier voisin. Le proxy Vite transmet `/api` vers ce backend ; `API_PROXY_TARGET` permet de changer la cible côté serveur uniquement (jamais de secret `VITE_*`). Les suites unitaires et E2E mockées ne démarrent pas de backend ; la suite d’intégration isolée ci-dessous démarre sa propre base éphémère.
+Le backend doit être lancé séparément sur **http://localhost:3000**, avec sa configuration MongoDB et son secret de session. Replica set/Atlas recommandé pour les transactions ; standalone accepté en mode dégradé mono-processus sans rollback, avec risque d’écritures partielles. Voir son contrat dans le dossier voisin. Le proxy Vite transmet `/api` vers ce backend ; `API_PROXY_TARGET` permet de changer la cible côté serveur uniquement (jamais de secret `VITE_*`). Les suites unitaires et E2E mockées ne démarrent pas de backend ; la suite d’intégration isolée ci-dessous démarre sa propre base éphémère. Pour un `/feed` non vide en développement, lancer `npm run seed:mnemo` côté backend : il crée le compte `mnemo` et des paquets publics de culture générale (voir le README backend).
 
 Copier éventuellement `.env.example` vers `.env.local`. `VITE_API_BASE_URL=/api` est la valeur par défaut. Ne jamais placer un secret dans une variable `VITE_*` : elle est publique dans le navigateur.
 
@@ -36,19 +36,21 @@ Versions stables verrouillées dans le manifeste et le lockfile : Vue 3.5, Vite 
 
 | Route | Accès / fonction |
 | --- | --- |
-| `/feed` | Public, recherche temporisée 350 ms, tris récents/populaires, pagination, aperçu recto-verso, likes et enregistrements après confirmation serveur |
+| `/feed` | Public, recherche temporisée 350 ms, tris récents/populaires, pagination, aperçu animé recto-verso (texte et image), likes et enregistrements après confirmation serveur |
 | `/library` | Connecté, cours/chapitres CRUD, positions et ordre, cascades confirmées, paquets filtrés, enregistrés |
-| `/create` | Connecté, paquet autonome ou rattaché à un chapitre personnel |
-| `/decks/:id` | Selon visibilité API, aperçu des cartes, partage, publication et suppression propriétaire |
-| `/decks/:id/edit` | Connecté et propriétaire vérifié, métadonnées, cartes question/réponse, ordre PUT, brouillons |
+| `/create` | Connecté, création rapide d’une flashcard, puis paquet autonome ou rattaché à un chapitre personnel |
+| `/decks/:id` | Selon visibilité API, aperçu animé des cartes, partage, publication et suppression propriétaire |
+| `/decks/:id/edit` | Connecté et propriétaire vérifié, métadonnées, cartes texte et image, ordre PUT, brouillons |
 | `/study` | Connecté, paquets personnels/enregistrés et historique personnel paginé |
-| `/study/:id` | Connecté, démarrage explicite si non vide, carte retournable, clavier, sortie confirmée, résumé et sauvegarde |
+| `/study/:id` | Connecté, démarrage explicite si non vide, retournement animé, clavier, sortie confirmée, résumé et sauvegarde |
 | `/profile/:username` | Public, identité/bio/paquets publics paginés ; édition réservée au propriétaire |
 | `/login`, `/register` | Connexion/inscription, restauration initiale `/auth/me`, erreurs proches des champs, état confirmation requise |
 | `/forgot-password`, `/reset-password?token=…` | Demande générique, lien de développement seulement s’il est explicitement fourni, changement de mot de passe |
 | `/verify-email?token=…` | Confirmation **manuelle**, aucun POST au chargement |
 
 Les redirections après connexion sont limitées à des chemins internes, sans `//`, antislash ou caractères de contrôle. Les lectures publiques restent publiques ; la garde frontend ne remplace pas l’autorisation de l’API.
+
+Sur `/create`, le bandeau **Créer une flashcard** est l’action principale. Il ouvre une fenêtre centrée sur la question et la réponse, avec images HTTP(S) facultatives et choix d’un paquet existant. Sans destination choisie, `POST /api/cards/quick` range la carte dans le paquet privé « Général », créé automatiquement une seule fois pour ce compte. `Ctrl`/`Cmd` + `Entrée` enregistre la carte. Le formulaire complet du paquet reste disponible juste en dessous. Il n’y a pas de bouton flottant sur les autres pages.
 
 ## Profils temporaires automatiques
 
@@ -78,7 +80,7 @@ Validation profils temporaires du 18 octobre 2026 : **build strict réussi, 46 t
 
 ## Éditeur et conservation des données
 
-Au démarrage, le frontend charge la configuration publique via `GET /api/config` avant de monter l’application. Seul `cardTextMaxLength` (entier 1–10000) est utilisé : `maxlength` recto/verso, compteurs et validation centralisée avant toute sauvegarde, y compris pour les brouillons restaurés. La limite est définie côté backend par `CARD_TEXT_MAX_LENGTH`, défaut **10000**, configurable uniquement vers le bas ; aucune variable `VITE_*` supplémentaire ni secret à transmettre. Recharger la page après un changement backend. En cas de panne HTTP/réseau ou de réponse invalide, repli à 10000 : **le serveur valide toujours réellement**, et peut refuser une face dépassant sa limite plus basse. Les longueurs sont comptées en unités UTF-16 après trim pour la validation ; aucun texte existant n’est tronqué automatiquement.
+Au démarrage, le frontend charge la configuration publique via `GET /api/config` avant de monter l’application. Seul `cardTextMaxLength` (entier 1–10000) est utilisé : `maxlength` du texte recto/verso, compteurs et validation centralisée avant toute sauvegarde, y compris pour les brouillons restaurés. Chaque face peut aussi porter une image facultative, adresse HTTP(S) d’au plus 2048 caractères : texte seul, image seule, ou les deux. Une face sans texte ni image est refusée. La limite est définie côté backend par `CARD_TEXT_MAX_LENGTH`, défaut **10000**, configurable uniquement vers le bas ; aucune variable `VITE_*` supplémentaire ni secret à transmettre. Recharger la page après un changement backend. En cas de panne HTTP/réseau ou de réponse invalide, repli à 10000 : **le serveur valide toujours réellement**, et peut refuser une face dépassant sa limite plus basse. Les longueurs sont comptées en unités UTF-16 après trim pour la validation ; aucun texte existant n’est tronqué automatiquement.
 
 Validation de cet ajout le 18 octobre 2026 : builds frontend/backend réussis, **32 tests unitaires frontend** (chargement, réponses invalides, pannes et validation dynamique), **23 tests backend**, **38 E2E mockés** desktop/mobile (dont brouillon trop long sans mutation) et **1 E2E réel** frontend/API/MongoDB réussis. Nettoyage confirmé : ports 3001/5174 libres, aucun processus mongod restant. Les résultats plus bas décrivent les validations antérieures.
 
@@ -90,7 +92,7 @@ Le rattachement se fait à un **chapitre**, pas directement à un cours. Sélect
 
 ## Révision
 
-Pas de démarrage vide ou automatique. Les flèches reviennent toujours au recto ; Espace retourne la carte hors des contrôles interactifs et des champs. Le résumé compte les **cartes uniques parcourues** et la durée approximative, jamais une maîtrise. L’API accepte ce nombre dans `cardsVisited` même si elle autorise aussi des passages répétés.
+Pas de démarrage vide ou automatique. Les flèches reviennent toujours au recto ; Espace retourne la carte hors des contrôles interactifs et des champs. Dans l’aperçu du paquet, la révision et le fil, le retournement est une rotation 3D : la carte se soulève, un reflet la traverse, le recto a un liseré violet et le verso un liseré vert. Changer de carte la fait entrer en glissant. Avec `prefers-reduced-motion`, le changement de face est instantané et la face masquée n’est plus exposée une fois l’animation terminée. Le résumé compte les **cartes uniques parcourues** et la durée approximative, jamais une maîtrise. L’API accepte ce nombre dans `cardsVisited` même si elle autorise aussi des passages répétés.
 
 Un seul POST est déclenché lors de la fin de session ; verrou en cours et après succès. En cas d’échec, le résumé reste en mémoire et un bouton permet un nouvel essai explicite. **Limite de protocole :** une réponse réseau perdue peut cacher un POST effectivement enregistré ; sans clé d’idempotence côté API, un retry peut créer un doublon. L’interface prévient de vérifier l’historique. Le résumé n’est pas conservé après fermeture de l’onglet.
 
@@ -100,7 +102,7 @@ Visibilité par paquet et champs publics de profil uniquement. Aucun faux régla
 
 ## Interface et composants
 
-Fond `#F8F8FC`, primaire `#6C5CE7`, surfaces blanches à rayons 20 px, police système locale. Sidebar desktop, navigation basse sous 768 px avec safe-area, fil centré et panneau conseil sur grands écrans. Composants communs : UiButton (primary/secondary/ghost/danger et busy), UiField (label, hint, erreurs aria), Avatar, EmptyState, LoadState, ConfirmDialog (dialog natif, focus piégé par navigateur et restauré), DeckCard.
+Fond `#F8F8FC`, primaire `#6C5CE7`, surfaces blanches à rayons 20 px, police système locale. Sidebar desktop, navigation basse sous 768 px avec safe-area, fil centré et panneau conseil sur grands écrans. Composants communs : UiButton (primary/secondary/ghost/danger et busy), UiField (label, hint, erreurs aria), Avatar, EmptyState, LoadState, ConfirmDialog (dialog natif, focus piégé par navigateur et restauré), DeckCard, CardFace (texte et image HTTP, sans `javascript:`), CardFields (saisie des deux faces), FlipCard (retournement 3D) et QuickCardDialog (création depuis `/create`).
 
 Focus visible, lien d’évitement, champs et erreurs associés, boutons tactiles, attributs pressed/busy, messages live, textes bruts et respect des mouvements réduits. Les confirmations de sortie utilisent les boîtes natives du navigateur. Les tests responsive automatisés ne remplacent pas un audit lecteur d’écran/contraste exhaustif.
 

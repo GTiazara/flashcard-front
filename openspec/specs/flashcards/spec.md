@@ -1,6 +1,6 @@
 ## Purpose
 
-Créer et modifier manuellement des cartes textuelles organisées dans un paquet, sans perte silencieuse des saisies. Source : [spécification manuelle, section 6](../../../../spec-manuelle/spec.md).
+Créer et modifier manuellement des cartes organisées dans un paquet, sans perte silencieuse des saisies. Chaque face est un texte, une image HTTP(S), ou les deux. Source : [spécification manuelle, section 6](../../../../spec-manuelle/spec.md).
 
 ## Requirements
 
@@ -11,12 +11,19 @@ L'interface SHALL proposer depuis « Créer » un « Nouveau paquet », la saisi
 - **WHEN** un utilisateur sans cours crée un paquet puis sa première carte
 - **THEN** il peut enregistrer le paquet privé sans rattachement et choisir ensuite de le publier.
 
-### Requirement: Cartes recto-verso textuelles
-Le système SHALL associer chaque carte à un paquet valide et conserver un identifiant, un recto textuel, un verso textuel, une position et les dates de création et modification. Le recto SHALL représenter la question ou notion et le verso la réponse ; les deux faces SHALL être affichées comme texte brut, sans exécuter de HTML. Le format SHALL permettre une extension future sans exiger image, audio, vidéo ou formule dans le MVP.
+### Requirement: Cartes recto-verso textuelles ou illustrées
+Le système SHALL associer chaque carte à un paquet valide et conserver un identifiant, un recto, un verso, une position et les dates de création et modification. Chaque face SHALL contenir un texte, une adresse HTTP(S) d’image d’au plus 2048 caractères, ou les deux. Le texte SHALL être affiché brut, sans exécuter de HTML, et une URL non HTTP(S), y compris `javascript:`, SHALL être refusée comme source d’image. Une face vide des deux côtés SHALL être refusée.
 
 #### Scenario: Enregistrement et restitution d'une carte
-- **WHEN** le propriétaire enregistre une question et une réponse contenant des caractères de balisage
-- **THEN** les deux textes sont restitués comme texte, dans le bon paquet et à leur position, sans interprétation HTML.
+- **WHEN** le propriétaire enregistre une question et une réponse contenant des caractères de balisage, ou une face composée seulement d’une image HTTP(S)
+- **THEN** les textes sont restitués comme texte et l’image est affichée par son URL, dans le bon paquet et à leur position, sans interprétation HTML.
+
+### Requirement: Création rapide d'une carte
+Depuis `/create`, l'interface SHALL proposer **Créer une flashcard** avant le formulaire complet du paquet. Cette action SHALL enregistrer une seule carte via `POST /api/cards/quick`, dans le paquet choisi ou, sans choix, dans le paquet privé unique « Général » créé pour le compte. Les images restent facultatives.
+
+#### Scenario: Carte ajoutée sans préparer un paquet
+- **WHEN** l'utilisateur saisit une question et une réponse sans choisir de paquet
+- **THEN** la carte est ajoutée au paquet privé « Général », créé une seule fois, et un message confirme le rangement.
 
 ### Requirement: Éditeur complet et validation visible
 L'éditeur SHALL afficher « Question ou mot », « Réponse », « Enregistrer », « Annuler », « Ajouter une carte », modifier/supprimer, les contrôles d'ordre et le nombre de cartes. Il SHALL refuser les faces vides après trim ou dépassant la limite serveur, avec erreurs près des champs et conservation des autres saisies. Aucun texte existant SHALL être tronqué automatiquement.

@@ -28,6 +28,9 @@ describe('Configuration publique et validation des faces', () => {
     expect(cardTextError('Q', '123456')).toContain('5 caractères')
     expect(cardTextError('  ', 'R')).toContain('obligatoires')
     expect(cardTextError('Q', '\n')).toContain('obligatoires')
+    expect(cardTextError('', 'La France', 'https://upload.wikimedia.org/wikipedia/en/c/c3/Flag_of_France.svg', '')).toBe('')
+    expect(cardTextError('Quel drapeau ?', '', '', 'https://upload.wikimedia.org/wikipedia/commons/9/9e/Flag_of_Japan.svg')).toBe('')
+    expect(cardTextError('Q', 'R', 'javascript:alert(1)', '')).toContain('HTTP')
   })
   it('accepte les bornes et compte comme maxlength en UTF-16', async () => {
     respond({ cardTextMaxLength: 1 }); await loadPublicConfig()

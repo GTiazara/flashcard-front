@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { Search, SlidersHorizontal, Heart, Bookmark, Layers3, ArrowUpRight, RotateCw, Sparkles, Lightbulb, Plus, ArrowRight } from 'lucide-vue-next'
+import { Search, SlidersHorizontal, Heart, Bookmark, Layers3, ArrowUpRight, Sparkles, Lightbulb, Plus, ArrowRight } from 'lucide-vue-next'
 import { auth } from '../lib/auth'
 import { api, errorMessage } from '../lib/api'
 import { usePagination } from '../lib/pagination'
@@ -10,6 +10,8 @@ import Avatar from '../components/Avatar.vue'
 import UiButton from '../components/UiButton.vue'
 import EmptyState from '../components/EmptyState.vue'
 import LoadState from '../components/LoadState.vue'
+import CardFace from '../components/CardFace.vue'
+import FlipCard from '../components/FlipCard.vue'
 const router = useRouter(), query = ref(''), search = ref(''), sort = ref('recent')
 const { items, busy, error, hasMore, load } = usePagination<Publication>(() => `/feed?sort=${sort.value}&q=${encodeURIComponent(search.value)}`)
 const flipped = reactive(new Set<string>()), pending = reactive(new Set<string>()), actionError = ref('')
@@ -42,7 +44,7 @@ async function action(publication: Publication, kind: 'like' | 'save') {
           <header><RouterLink :to="`/profile/${publication.owner.username}`" class="author"><Avatar :name="publication.owner.displayName" :url="publication.owner.avatarUrl" /><span><strong>{{ publication.owner.displayName }}</strong><small>@{{ publication.owner.username }} <span>·</span> {{ new Date(publication.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) }}</small></span></RouterLink><span class="publication-label">A PARTAGÉ UN PAQUET</span></header>
           <div class="badges"><span v-if="publication.deck.subject" class="badge">{{ publication.deck.subject }}</span><span v-if="publication.deck.level" class="badge neutral">{{ publication.deck.level }}</span></div>
           <h2><RouterLink :to="`/decks/${publication.deck._id}`">{{ publication.deck.title }}</RouterLink></h2><p v-if="publication.deck.description" class="publication-description text-pre">{{ publication.deck.description }}</p>
-          <button v-if="publication.deck.preview" class="flashcard preview" :aria-label="flipped.has(publication._id) ? 'Afficher la question' : 'Afficher la réponse'" :aria-pressed="flipped.has(publication._id)" @click="flip(publication._id)"><span class="face-label">{{ flipped.has(publication._id) ? 'LA RÉPONSE' : 'UNE CARTE POUR COMMENCER' }}</span><span class="face-content">{{ flipped.has(publication._id) ? publication.deck.preview.back : publication.deck.preview.front }}</span><span class="flip-hint"><RotateCw :size="13" /> Cliquez pour {{ flipped.has(publication._id) ? 'revenir à la question' : 'révéler la réponse' }}</span></button>
+          <FlipCard v-if="publication.deck.preview" class="preview" tone="feed" :flipped="flipped.has(publication._id)" :label="flipped.has(publication._id) ? 'Afficher la question' : 'Afficher la réponse'" hint="Cliquez pour retourner la carte" @flip="flip(publication._id)"><template #front><CardFace label="UNE CARTE POUR COMMENCER" :text="publication.deck.preview.front" :image-url="publication.deck.preview.frontImageUrl" /></template><template #back><CardFace label="LA RÉPONSE" :text="publication.deck.preview.back" :image-url="publication.deck.preview.backImageUrl" /></template></FlipCard>
           <div class="publication-meta"><span><Layers3 :size="14" />{{ publication.deck.cardCount }} cartes à découvrir</span><RouterLink :to="`/decks/${publication.deck._id}`">Voir le paquet <ArrowUpRight :size="15" /></RouterLink></div>
           <footer><div class="actions"><button class="social-button" :class="{ selected: publication.liked }" :aria-pressed="publication.liked" :disabled="pending.has(`${publication._id}:like`)" :aria-label="publication.liked ? 'Ne plus aimer' : 'Aimer ce paquet'" @click="action(publication, 'like')"><Heart :size="18" :fill="publication.liked ? 'currentColor' : 'none'" /><span>{{ publication.likeCount }}</span></button><button class="social-button" :class="{ selected: publication.saved }" :aria-pressed="publication.saved" :disabled="pending.has(`${publication._id}:save`)" @click="action(publication, 'save')"><Bookmark :size="18" :fill="publication.saved ? 'currentColor' : 'none'" /><span>{{ publication.saved ? 'Enregistré' : 'Enregistrer' }}</span></button></div><RouterLink :to="`/study/${publication.deck._id}`" class="btn btn-primary">Réviser <ArrowRight :size="15" /></RouterLink></footer>
         </article>

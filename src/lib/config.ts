@@ -18,9 +18,20 @@ export async function loadPublicConfig(): Promise<void> {
   config.cardTextMaxLength = limit
 }
 
-export function cardTextError(front: string, back: string): string {
+export function httpImage(value?: string): string {
+  const url = value?.trim() ?? ''
+  if (!url || url.length > 2048) return ''
+  try {
+    const parsed = new URL(url)
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? url : ''
+  } catch { return '' }
+}
+
+export function cardTextError(front: string, back: string, frontImageUrl = '', backImageUrl = ''): string {
   const faces = [front.trim(), back.trim()]
-  if (faces.some(face => !face)) return 'La question et la réponse sont obligatoires.'
   if (faces.some(face => face.length > publicConfig.cardTextMaxLength)) return `Chaque face est limitée à ${publicConfig.cardTextMaxLength} caractères.`
+  const images = [frontImageUrl.trim(), backImageUrl.trim()]
+  if (images.some(image => image && !httpImage(image))) return 'Chaque image doit être une adresse HTTP(S).'
+  if (faces.some((face, index) => !face && !httpImage(images[index]))) return 'La question et la réponse sont obligatoires.'
   return ''
 }

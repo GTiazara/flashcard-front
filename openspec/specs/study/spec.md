@@ -16,7 +16,7 @@ Le système SHALL permettre à un utilisateur connecté d'ouvrir un paquet autor
 - **THEN** aucun contenu ni session de révision ne lui est fourni, même s'il connaît l'identifiant.
 
 ### Requirement: Révision recto-verso sans mutation
-L'écran SHALL afficher le titre du paquet, une grande carte centrée et une action « Retourner la carte ». Chaque nouvelle carte SHALL commencer au recto, puis permettre d'afficher le verso sans modifier les textes enregistrés.
+L'écran SHALL afficher le titre du paquet, une grande carte centrée et une action « Retourner la carte ». Chaque nouvelle carte SHALL commencer au recto, puis permettre d'afficher le verso sans modifier les textes enregistrés. Le retournement SHALL être animé en rotation 3D dans l'aperçu, la révision et le fil ; `prefers-reduced-motion` SHALL le rendre instantané. La face au dos SHALL être masquée une fois l'animation terminée.
 
 #### Scenario: Retournement d'une carte
 - **WHEN** l'utilisateur démarre la révision puis retourne la carte
