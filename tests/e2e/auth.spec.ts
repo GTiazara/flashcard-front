@@ -6,11 +6,11 @@ test('connexion refusée : message conservé et formulaire non effacé', async (
     if (path === '/auth/login') { await route.fulfill({ status: 401, json: { message: 'Email ou mot de passe incorrect.' } }); return true } return false
   })
   await page.goto('/login')
-  await page.getByLabel('Adresse email').fill('camille@example.fr')
+  await page.getByLabel('Pseudo ou email').fill('camille@example.fr')
   await page.getByLabel('Mot de passe', { exact: true }).fill('un mauvais mot de passe')
   await page.getByRole('button', { name: 'Se connecter', exact: true }).click()
   await expect(page.getByRole('alert')).toHaveText('Email ou mot de passe incorrect.')
-  await expect(page.getByLabel('Adresse email')).toHaveValue('camille@example.fr')
+  await expect(page.getByLabel('Pseudo ou email')).toHaveValue('camille@example.fr')
   await expect(page.getByLabel('Mot de passe', { exact: true })).toHaveValue('un mauvais mot de passe')
 })
 

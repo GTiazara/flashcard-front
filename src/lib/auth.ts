@@ -41,7 +41,7 @@ export function initAuth(): Promise<void> {
     }
     catch (error) {
       if (error instanceof ApiError && error.status === 401) {
-        const sensitive = ['/verify-email', '/reset-password', '/forgot-password'].includes(window.location.pathname)
+        const sensitive = ['/verify-email', '/reset-password', '/recover', '/forgot-password'].includes(window.location.pathname)
         if (!sensitive && !verificationPending()) await ensureGuest()
       } else throw error
     }

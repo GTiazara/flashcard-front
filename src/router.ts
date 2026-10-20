@@ -16,7 +16,7 @@ export const router = createRouter({
     { path: '/study', component: () => import('./views/StudyView.vue'), meta: { private: true, title: 'Réviser' } },
     { path: '/study/:id', component: () => import('./views/ReviewView.vue'), meta: { private: true, title: 'Ma révision' } },
     { path: '/profile/:username', component: () => import('./views/ProfileView.vue'), meta: { title: 'Profil' } },
-    ...['login', 'register', 'forgot-password', 'reset-password', 'verify-email'].map(name => ({ path: `/${name}`, component: () => import('./views/AuthView.vue'), meta: { auth: true, title: 'Votre compte' } })),
+    ...['login', 'register', 'forgot-password', 'reset-password', 'recover', 'verify-email'].map(name => ({ path: `/${name}`, component: () => import('./views/AuthView.vue'), meta: { auth: true, title: 'Votre compte' } })),
     { path: '/:pathMatch(.*)*', component: () => import('./views/NotFoundView.vue'), meta: { title: 'Page introuvable' } },
   ],
 })

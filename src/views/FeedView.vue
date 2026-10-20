@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { Search, SlidersHorizontal, Heart, Bookmark, Layers3, ArrowUpRight, Sparkles, Lightbulb, Plus, ArrowRight } from 'lucide-vue-next'
+import { Search, SlidersHorizontal, Heart, Bookmark, Layers3, ArrowUpRight, Lightbulb, Plus, ArrowRight } from 'lucide-vue-next'
 import { auth } from '../lib/auth'
 import { api, errorMessage } from '../lib/api'
 import { usePagination } from '../lib/pagination'
@@ -35,7 +35,6 @@ async function action(publication: Publication, kind: 'like' | 'save') {
 <template>
   <div class="feed-layout">
     <section class="feed-main">
-      <div class="page-heading"><p class="eyebrow"><Sparkles :size="13" /> LA CURIOSITÉ SE PARTAGE</p><h1>Une nouvelle chose<br />à <em>apprendre aujourd’hui.</em></h1><p>Des idées à découvrir. Des connaissances à faire grandir.</p></div>
       <div class="search-bar"><Search :size="19" /><input v-model="query" type="search" aria-label="Rechercher des paquets" placeholder="Un sujet, un paquet, un esprit curieux…" /><SlidersHorizontal :size="17" aria-hidden="true" /></div>
       <div class="feed-sort"><div class="tabs"><button :class="{ active: sort === 'recent' }" :aria-pressed="sort === 'recent'" @click="sort = 'recent'">Dernières découvertes</button><button :class="{ active: sort === 'popular' }" :aria-pressed="sort === 'popular'" @click="sort = 'popular'">Les plus aimés</button></div><span class="subtle">À explorer à votre rythme</span></div>
       <p v-if="actionError" role="alert" class="alert">{{ actionError }} <UiButton variant="ghost" @click="load(true)">Actualiser</UiButton></p>

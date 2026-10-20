@@ -23,22 +23,22 @@ L'écran SHALL afficher le titre du paquet, une grande carte centrée et une act
 - **THEN** la question apparaît d'abord et la réponse ensuite, sans requête de modification du contenu.
 
 ### Requirement: Navigation et progression fluides
-L'écran SHALL proposer « Précédente », « Suivante » et une action de sortie ; la navigation SHALL respecter l'ordre du paquet, fonctionner sans rechargement complet et mettre à jour un indicateur « Carte n sur total ». Les bornes SHALL empêcher de naviguer hors du paquet et l'utilisateur SHALL pouvoir quitter à tout moment.
+L'écran SHALL avancer à la carte suivante par le premier repère choisi, proposer « Précédente » et « Continuer » seulement pour revenir sur une carte déjà annotée, et une action de sortie. Il SHALL ne pas proposer « Suivante », qui comptait une carte sans repère. La navigation SHALL respecter l'ordre du paquet, fonctionner sans rechargement complet et mettre à jour un indicateur « Carte n sur total » distinct du nombre de repères. Les bornes SHALL empêcher de naviguer hors du paquet et l'utilisateur SHALL pouvoir quitter à tout moment.
 
 #### Scenario: Navigation avant et arrière
-- **WHEN** l'utilisateur passe à la carte suivante puis revient à la précédente
-- **THEN** chaque carte s'affiche au recto, l'indicateur reflète sa position et la page n'est pas rechargée.
+- **WHEN** l'utilisateur choisit un repère puis revient à la carte précédente
+- **THEN** chaque carte s'affiche au recto, l'indicateur reflète sa position, le nombre de repères ne change pas au retour, et la page n'est pas rechargée.
 
 #### Scenario: Sortie anticipée
 - **WHEN** l'utilisateur quitte avant la dernière carte
 - **THEN** la session se termine sans bloquer la navigation et sans inventer une session complète.
 
 ### Requirement: Résumé factuel et historique personnel
-À la fin d'une session, l'interface SHALL présenter le nombre de cartes uniques parcourues et une durée approximative, sans score de maîtrise ni répétition espacée. Revenir sur une même carte SHALL ne pas augmenter ce nombre. Le système SHALL permettre d'enregistrer et consulter un historique personnel paginé.
+À la fin d'une session, l'interface SHALL présenter le nombre de cartes uniques parcourues, une durée approximative et, si des cartes ont été annotées, un taux issu des repères « Je ne connais pas », « J'ai un doute » et « Je connais ». Ce taux SHALL valoir la moyenne de 0, 0,5 et 1, sans répétition espacée ni certification de maîtrise. Revenir sur une même carte SHALL ne pas augmenter le nombre de cartes parcourues et SHALL conserver un seul repère, le dernier choisi. Le système SHALL permettre d'enregistrer et consulter un historique personnel paginé.
 
 #### Scenario: Fin de session
 - **WHEN** l'utilisateur termine sa révision
-- **THEN** un résumé indique les cartes uniques parcourues et le temps approximatif ; l'interface persiste ce nombre dans les bornes du contrat, sans conclure à une connaissance acquise.
+- **THEN** un résumé indique les cartes uniques parcourues, le temps approximatif et le taux des cartes annotées ; l'interface persiste ces nombres dans les bornes du contrat, sans conclure à une connaissance certifiée.
 
 #### Scenario: Retours sur une carte déjà parcourue
 - **WHEN** l'utilisateur parcourt la première carte, la deuxième, puis revient sur la première et la deuxième
