@@ -14,12 +14,12 @@ const busy = ref(false), error = ref(''), errors = ref<Record<string,string>>({}
 const titles: Record<string, [string, string]> = {
   login: ['Heureux de vous retrouver.', 'Vos prochaines découvertes vous attendent.'],
   register: ['Faites place à la curiosité.', 'Un pseudo et un mot de passe. Pas d’email, pas de nom, pas d’image.'],
-  'forgot-password': ['Compte créé avec un email.', 'Les nouveaux comptes se récupèrent avec le lien enregistré dans le profil. Cette page reste réservée aux comptes qui ont déjà une adresse email.'],
+  'forgot-password': ['Compte créé avec un email.', 'Les nouveaux comptes se récupèrent avec le lien copié à la création. Cette page reste réservée aux comptes qui ont déjà une adresse email.'],
   'reset-password': ['Votre nouveau mot de passe.', 'Choisissez une phrase longue et unique.'],
-  recover: ['Retrouver l’accès.', 'Ce lien, enregistré depuis votre profil, choisit un nouveau mot de passe. Conservez-le ensuite : il reste valable.'],
+  recover: ['Retrouver l’accès.', 'Ce lien choisit un nouveau mot de passe. Conservez-le ensuite : il reste valable jusqu’à ce que vous en génériez un autre.'],
   'verify-email': ['Confirmez votre adresse.', 'Cliquez ci-dessous pour confirmer votre email. Le lien n’est utilisé qu’à votre demande.'],
 }
-const title = computed(() => mode.value === 'register' && auth.user?.isGuest ? ['Conserver mon profil', 'Choisissez un pseudo et un mot de passe. Le lien de récupération s’affiche juste après : copiez-le dans un endroit sûr.'] : titles[mode.value] || titles.login!)
+const title = computed(() => mode.value === 'register' && auth.user?.isGuest ? ['Conserver mon profil', 'Choisissez un pseudo et un mot de passe. Le lien de récupération s’affiche juste après, une seule fois.'] : titles[mode.value] || titles.login!)
 const needsPassword = computed(() => ['login', 'register', 'reset-password', 'recover'].includes(mode.value))
 const buttonText = computed(() => ({ login: 'Se connecter', register: 'Créer mon compte', 'forgot-password': 'Recevoir un lien', 'reset-password': 'Enregistrer le mot de passe', recover: 'Enregistrer le mot de passe', 'verify-email': 'Confirmer mon adresse' })[mode.value])
 function selectLink(event: FocusEvent) { const input = event.target; if (input instanceof HTMLInputElement) input.select() }
@@ -43,7 +43,7 @@ async function submit() {
   if (['register','reset-password','recover'].includes(mode.value)) { const issue = passwordError(form.password); if (issue) errors.value.password = issue }
   if (mode.value === 'register' && !/^[a-z0-9_]{3,24}$/.test(form.username.trim().toLowerCase())) errors.value.username = 'De 3 à 24 caractères : lettres minuscules, chiffres et tiret bas.'
   const token = typeof route.query.token === 'string' ? route.query.token : ''
-  if (['reset-password','verify-email','recover'].includes(mode.value) && !token) { error.value = 'Ce lien est incomplet. Utilisez le lien enregistré dans votre profil.'; return }
+  if (['reset-password','verify-email','recover'].includes(mode.value) && !token) { error.value = 'Ce lien est incomplet. Utilisez le lien copié à la création du compte.'; return }
   if (Object.keys(errors.value).length) return
   busy.value = true
   try {
@@ -81,7 +81,7 @@ async function submit() {
       <div v-if="devUrl" class="notice"><strong>Développement uniquement</strong><p>Lien renvoyé par l’API, sans envoi SMTP :</p><a :href="devUrl" class="dev-link" rel="noreferrer">Ouvrir le lien de développement</a></div>
       <p v-if="mode === 'login' && auth.user?.isGuest" class="notice">Se connecter à un compte existant ne fusionne pas les profils : le contenu temporaire ne sera pas transféré. Pour le conserver, choisissez « Conserver mon profil ». Naviguer ici ne quitte pas votre profil.</p>
       <p v-if="mode === 'register' && verificationPending()" class="notice" role="status">Inscription en attente : consultez votre messagerie, confirmez votre adresse puis connectez-vous.</p>
-      <div v-if="recoveryLink" class="recovery-save stack" role="status"><strong>Enregistrez ce lien maintenant.</strong><p>Il réinitialise le mot de passe. Copiez-le dans un endroit sûr (gestionnaire de mots de passe ou note hors ligne). Vous pourrez le revoir dans votre profil.</p><input class="recovery-url" readonly :value="recoveryLink" aria-label="Lien de récupération" @focus="selectLink" /><UiButton type="button" variant="secondary" @click="copyLink">Copier le lien</UiButton><UiButton type="button" @click="finishRegister">J’ai copié le lien</UiButton></div>
+      <div v-if="recoveryLink" class="recovery-save stack" role="status"><strong>Enregistrez ce lien maintenant.</strong><p>Il réinitialise le mot de passe. Copiez-le dans un endroit sûr. Il ne sera plus affiché : seul un résumé illisible est conservé. Un nouveau lien, depuis le profil, remplace celui-ci.</p><input class="recovery-url" readonly :value="recoveryLink" aria-label="Lien de récupération" @focus="selectLink" /><UiButton type="button" variant="secondary" @click="copyLink">Copier le lien</UiButton><UiButton type="button" @click="finishRegister">J’ai copié le lien</UiButton></div>
       <form v-else-if="!done && !(mode === 'register' && verificationPending())" class="stack" @submit.prevent="submit">
         <UiField v-if="mode === 'register'" v-model="form.username" label="Pseudo" name="username" required minlength="3" maxlength="24" autocomplete="username" hint="Lettres minuscules, chiffres et tiret bas, 3 à 24 caractères. Il sert aussi de nom affiché." :error="errors.username" />
         <UiField v-if="mode === 'login'" v-model="form.identifier" label="Pseudo ou email" name="identifier" required autocomplete="username" hint="Un compte déjà créé avec un email peut encore se connecter avec cette adresse." :error="errors.identifier" />

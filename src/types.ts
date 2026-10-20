@@ -13,6 +13,6 @@ export interface Publication { _id: string; deck: Deck; owner: User; createdAt: 
 export interface Profile extends User { publicDeckCount: number; followerCount: number; followingCount: number; decks: Deck[]; page: number; hasMore: boolean }
 export interface StudySession { _id: string; deck: string; cardsVisited: number; durationSeconds: number; knownCount?: number; doubtCount?: number; unknownCount?: number; createdAt: string }
 export interface Message { message: string; devResetUrl?: string; devVerificationUrl?: string; username?: string }
-export interface RecoveryLink { url: string; hasEmail: boolean }
+export interface RecoveryLink { hasLink: boolean; hasEmail: boolean; url?: string }
 export interface Verification extends Message { requiresVerification: true; recoveryUrl?: string }
 export const ownerId = (deck: Deck) => typeof deck.owner === 'string' ? deck.owner : deck.owner._id

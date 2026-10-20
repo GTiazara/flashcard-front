@@ -18,7 +18,9 @@ export async function setupApi(page: Page, authenticated = true, custom?: (route
     const json = (body: unknown, status = 200) => route.fulfill({ status, json: body })
     if (path === '/config') { await json({ cardTextMaxLength: 10000 }); return }
     if (path === '/auth/me') { await json(loggedIn ? currentUser : { message: 'Non connecté' }, loggedIn ? 200 : 401); return }
-    if (path === '/auth/recovery' && method === 'GET') { await json({ url: `http://127.0.0.1:5173/recover?token=${'ab'.repeat(32)}`, hasEmail: Boolean(currentUser && !currentUser.isGuest) }); return }
+    if (path === '/auth/recovery' && method === 'GET') { await json({ hasLink: true, hasEmail: Boolean(currentUser && !currentUser.isGuest) }); return }
+    if (path === '/auth/recovery' && method === 'POST') { await json({ url: `http://127.0.0.1:5173/recover?token=${'cd'.repeat(32)}`, hasLink: true, hasEmail: Boolean(currentUser && !currentUser.isGuest) }); return }
+    if (path === '/auth/delete-account' && method === 'POST') { loggedIn = false; await route.fulfill({ status: 204 }); return }
     if (path === '/auth/guest') { loggedIn = true; currentUser = guest; await json(currentUser); return }
     if (path === '/auth/login' || path === '/auth/register') { loggedIn = true; currentUser = path === '/auth/register' && currentUser.isGuest ? { ...user, _id: currentUser._id } : user; await json(currentUser); return }
     if (path === '/auth/logout') { loggedIn = false; await route.fulfill({ status: 204 }); return }
