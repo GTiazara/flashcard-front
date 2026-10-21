@@ -11,7 +11,8 @@ export interface Course { _id: string; title: string; description?: string; colo
 export interface Chapter { _id: string; title: string; description?: string; position: number; course: string }
 export interface Publication { _id: string; deck: Deck; owner: User; createdAt: string; likeCount: number; liked: boolean; saved: boolean }
 export interface Profile extends User { publicDeckCount: number; followerCount: number; followingCount: number; decks: Deck[]; page: number; hasMore: boolean }
-export interface StudySession { _id: string; deck: string; cardsVisited: number; durationSeconds: number; createdAt: string }
-export interface Message { message: string; devResetUrl?: string; devVerificationUrl?: string }
-export interface Verification extends Message { requiresVerification: true }
+export interface StudySession { _id: string; deck: string; cardsVisited: number; durationSeconds: number; knownCount?: number; doubtCount?: number; unknownCount?: number; createdAt: string }
+export interface Message { message: string; devResetUrl?: string; devVerificationUrl?: string; username?: string }
+export interface RecoveryLink { hasLink: boolean; hasEmail: boolean; url?: string }
+export interface Verification extends Message { requiresVerification: true; recoveryUrl?: string }
 export const ownerId = (deck: Deck) => typeof deck.owner === 'string' ? deck.owner : deck.owner._id

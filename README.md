@@ -59,7 +59,7 @@ Sur `/create`, le bandeau **Créer une flashcard** est l’action principale. Il
 Un profil temporaire est authentifié : bibliothèque, cours, chapitres, cartes, révisions, édition du profil, likes, enregistrements et publications sont accessibles avec les mêmes contrôles propriétaire que pour un compte permanent. Dans le tableau précédent, « Connecté » inclut donc les invités. Le badge **Profil temporaire**, le nom affiché et **Conserver mon profil** identifient cet état, y compris sur mobile.
 
 - Le serveur conserve l’accès invité grâce à un cookie opaque **httpOnly de 400 jours** ; si la session manque, l’endpoint invité restaure le même utilisateur et une session. **Pas de remise à zéro quotidienne.** La durée du cookie ne garantit pas une conservation éternelle : suppression des cookies, autre navigateur, politique du navigateur ou sortie explicite peuvent empêcher de retrouver le profil.
-- Avant conversion, aucun email n’est associé : **pas de récupération par email ou mot de passe oublié** pour ce profil temporaire. Conserver le profil via `/register` lui associe email et mot de passe (12 caractères minimum, 72 octets UTF-8 maximum), conserve le même `_id` et tout son contenu. Les brouillons locaux restent liés à cet identifiant.
+- Avant conversion, aucun email n’est associé : **pas de récupération par email** pour ce profil temporaire. Conserver le profil via `/register` demande un pseudo et un mot de passe (12 caractères minimum, 72 octets UTF-8 maximum), conserve le même `_id`, le nom affiché déjà choisi et tout son contenu. Le lien de récupération s’affiche une seule fois, juste après la création, et doit être enregistré par l’utilisateur. Le profil peut en générer un nouveau, qui remplace l’ancien. La suppression du compte efface aussi ses contenus. Les comptes déjà créés avec un email continuent de se connecter et de réinitialiser leur mot de passe avec cette adresse. Les brouillons locaux restent liés à cet identifiant.
 - Si l’inscription nécessite une vérification, l’identité locale est effacée et un simple booléen `mnemo:verification-pending` est conservé en **sessionStorage**, sans email, mot de passe ou token. Dans cet onglet, aucun nouveau profil invité ni nouvelle conversion ne sont lancés automatiquement ; après rechargement, l’inscription reste en attente. Confirmer l’email puis se connecter. L’initialisation des pages de vérification et récupération de mot de passe ne crée pas d’invité.
 - La page de connexion propose **Continuer sans compte**. Y naviguer ne quitte pas le profil temporaire. **Se connecter à un compte existant ne transfère ni ne fusionne le contenu invité** : avertissement avant soumission ; le serveur efface alors le cookie invité.
 - **Quitter ce profil** termine la session et efface le cookie invité côté serveur. Pour un invité, une confirmation avertit de la perte possible d’accès ; annuler ne modifie rien. Après une sortie réussie, aucun invité n’est recréé silencieusement : choisir **Recommencer en invité**, ou recharger la page. Un échec de sortie conserve le profil affiché et l’erreur.
@@ -92,7 +92,7 @@ Le rattachement se fait à un **chapitre**, pas directement à un cours. Sélect
 
 ## Révision
 
-Pas de démarrage vide ou automatique. Les flèches reviennent toujours au recto ; Espace retourne la carte hors des contrôles interactifs et des champs. Dans l’aperçu du paquet, la révision et le fil, le retournement est une rotation 3D : la carte se soulève, un reflet la traverse, le recto a un liseré violet et le verso un liseré vert. Changer de carte la fait entrer en glissant. Avec `prefers-reduced-motion`, le changement de face est instantané et la face masquée n’est plus exposée une fois l’animation terminée. Le résumé compte les **cartes uniques parcourues** et la durée approximative, jamais une maîtrise. L’API accepte ce nombre dans `cardsVisited` même si elle autorise aussi des passages répétés.
+Pas de démarrage vide ou automatique. Espace retourne la carte hors des contrôles interactifs et des champs, et chaque nouvelle carte revient au recto. Sous la carte de révision, trois repères annotent la carte courante : **Je ne connais pas** (rouge, touche 1), **J'ai un doute** (orange, touche 2) et **Je connais** (vert, touche 3). Le premier repère d'une carte avance à la suivante ; un nouveau choix sur la même carte remplace le précédent. Il n'y a pas de bouton Suivante : il sautait une carte et faisait monter « cartes parcourues » sans repère. **Précédente** revient en arrière, **Continuer** ne réapparaît que sur une carte déjà annotée. Pendant la session, l'écran affiche la position (« Carte n sur total ») et le nombre de repères, séparément. Dans l’aperçu du paquet, la révision et le fil, le retournement est une rotation 3D : la carte se soulève, un reflet la traverse, le recto a un liseré violet et le verso un liseré vert. Changer de carte la fait entrer en glissant. Avec `prefers-reduced-motion`, le changement de face est instantané et la face masquée n’est plus exposée une fois l’animation terminée. Le résumé compte les **cartes uniques parcourues**, la durée approximative et, si au moins une carte est annotée, un taux : connu vaut 1, le doute 0,5 et inconnu 0. Les cartes non annotées ne comptent pas dans ce taux. L’API accepte le nombre unique dans `cardsVisited` même si elle autorise aussi des passages répétés.
 
 Un seul POST est déclenché lors de la fin de session ; verrou en cours et après succès. En cas d’échec, le résumé reste en mémoire et un bouton permet un nouvel essai explicite. **Limite de protocole :** une réponse réseau perdue peut cacher un POST effectivement enregistré ; sans clé d’idempotence côté API, un retry peut créer un doublon. L’interface prévient de vérifier l’historique. Le résumé n’est pas conservé après fermeture de l’onglet.
 
@@ -159,3 +159,41 @@ Réserves de la validation frontend initiale : pas de recette MongoDB/SMTP dans 
 Configurer un **fallback SPA vers `/index.html` pour les routes frontend**. Exclure impérativement `/api/*` de ce fallback et transmettre ces requêtes au backend, sans réécrire son préfixe `/api`. Recommandation : même origine HTTPS pour frontend et `/api` via reverse proxy ; même site au minimum pour les cookies SameSite=Lax.
 
 Aligner exactement `CORS_ORIGIN` et `FRONTEND_URL` backend avec l’origine publique, configurer `TRUST_PROXY`, HTTPS, cookie Secure et SMTP production. Ne jamais mettre un joker CORS avec credentials. Le proxy Vite n’existe qu’en développement. Un backend réellement cross-site requiert une revue cookies/CSRF hors de cette livraison. Les limitations de débit multi-instance, MongoDB replica set, sauvegardes et SMTP sont des responsabilités d’exploitation backend.
+## Publications statiques (CMS Markdown)
+
+Les contenus éditoriaux peuvent être publiés sans créer de document MongoDB ni de compte utilisateur. Ils sont chargés à la compilation depuis `src/content/static/*.md`. Un profil virtuel est créé à partir des champs `author`, `authorName` et `authorBio` ; par exemple `static_mnemo`. Le fil et le profil listent automatiquement les fichiers dont `draft` ne vaut pas `true`.
+
+Exemple de fichier :
+
+```md
+---
+slug: listes-python
+author: static_mnemo
+authorName: Mnemo
+authorBio: Cours préparés par l’équipe.
+course: Python
+title: Les listes en Python
+description: Comprendre les listes.
+subject: Programmation
+level: Débutant
+draft: false
+---
+
+## Définition
+
+Une liste conserve plusieurs valeurs ordonnées.
+
+## Cartes
+
+Q: Comment lire le premier élément ?
+A: Avec `liste[0]`.
+
+Q: Que fait append ?
+A: Ajoute une valeur à la fin.
+```
+
+`slug` définit les routes `/static/:slug` et `/static/:slug/study`. Le `course` regroupe les paquets sur le profil auteur. Les cartes utilisent une paire de lignes `Q:` / `A:` séparées par une ligne vide. Le texte avant `## Cartes` est présenté comme contenu du cours. Les révisions statiques sont locales à la page : elles ne créent pas d’historique en base. Une modification Markdown est prise en compte au prochain build frontend. Ce profil et ces publications ne peuvent pas être édités ou supprimés via l’API.
+
+Les fichiers de cours peuvent contenir les sections optionnelles `## Définition`, `## Exemple` et `## À retenir` ; chaque section est affichée seulement si elle contient du texte. Le cours accepte également du texte introductif avant la première section. Le seul contenu obligatoire est au moins une carte `Q:` / `A:`. Les valeurs question et réponse peuvent occuper plusieurs lignes et inclure une image Markdown, par exemple `![Drapeau](https://example.org/drapeau.png)` ; les images HTTP(S) et les chemins locaux absolus sont affichés.
+
+Les utilisateurs peuvent aussi enregistrer un paquet statique depuis sa page. Cette action conserve uniquement le slug comme signet lié à leur utilisateur dans MongoDB ; le contenu et le profil auteur restent dans le Markdown. Les signets statiques apparaissent dans Bibliothèque → Enregistrés.

@@ -19,7 +19,7 @@ export async function api<T>(path: string, method = 'GET', body?: unknown): Prom
     })
   } catch { throw new ApiError('Connexion impossible. Vérifiez votre réseau et réessayez. Le résultat d’une modification peut être incertain.') }
   if (version !== identityVersion) throw new ApiError('Le profil actif a changé. Cette réponse a été ignorée.', 409)
-  if (response.status === 401 && !['/auth/me', '/auth/guest', '/auth/login', '/auth/register'].includes(path)) unauthorized()
+  if (response.status === 401 && !['/auth/me', '/auth/guest', '/auth/login', '/auth/register', '/auth/delete-account'].includes(path)) unauthorized()
   if (response.status === 204) return undefined as T
   let data: unknown
   try { data = await response.json() } catch { throw new ApiError('Réponse du serveur illisible. Réessayez plus tard.', response.status) }
