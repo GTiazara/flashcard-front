@@ -1,5 +1,6 @@
 import { createRouter, createWebHashHistory, createWebHistory } from 'vue-router'
 import { initAuth } from './lib/auth'
+import { getStaticAuthor } from './lib/static-content'
 
 export const router = createRouter({
   history: import.meta.env.VITE_ROUTER_MODE === 'hash'
@@ -13,6 +14,9 @@ export const router = createRouter({
     { path: '/create', component: () => import('./views/EditorView.vue'), meta: { private: true, title: 'Créer un paquet' } },
     { path: '/decks/:id/edit', component: () => import('./views/EditorView.vue'), meta: { private: true, title: 'Modifier un paquet' } },
     { path: '/decks/:id', component: () => import('./views/DeckView.vue'), meta: { title: 'Le paquet' } },
+    { path: '/static-author/:username', component: () => import('./views/StaticContentView.vue'), meta: { title: 'Cours statiques' } },
+    { path: '/static/:slug', component: () => import('./views/StaticContentView.vue'), meta: { title: 'Publication statique' } },
+    { path: '/static/:slug/study', component: () => import('./views/ReviewView.vue'), meta: { title: 'Révision statique' } },
     { path: '/study', component: () => import('./views/StudyView.vue'), meta: { private: true, title: 'Réviser' } },
     { path: '/study/:id', component: () => import('./views/ReviewView.vue'), meta: { private: true, title: 'Ma révision' } },
     { path: '/profile/:username', component: () => import('./views/ProfileView.vue'), meta: { title: 'Profil' } },
@@ -20,7 +24,9 @@ export const router = createRouter({
     { path: '/:pathMatch(.*)*', component: () => import('./views/NotFoundView.vue'), meta: { title: 'Page introuvable' } },
   ],
 })
-router.beforeEach(async () => {
+router.beforeEach(async to => {
   await initAuth()
+  const username = typeof to.params.username === 'string' ? to.params.username : ''
+  if (to.path.startsWith('/profile/') && getStaticAuthor(username)) return `/static-author/${username}`
 })
 router.afterEach(to => { document.title = `${String(to.meta.title || 'Apprendre')} — Mnemo` })

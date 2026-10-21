@@ -149,3 +149,41 @@ Réserves de la validation frontend initiale : pas de recette MongoDB/SMTP dans 
 Configurer un **fallback SPA vers `/index.html` pour les routes frontend**. Exclure impérativement `/api/*` de ce fallback et transmettre ces requêtes au backend, sans réécrire son préfixe `/api`. Recommandation : même origine HTTPS pour frontend et `/api` via reverse proxy ; même site au minimum pour les cookies SameSite=Lax.
 
 Aligner exactement `CORS_ORIGIN` et `FRONTEND_URL` backend avec l’origine publique, configurer `TRUST_PROXY`, HTTPS, cookie Secure et SMTP production. Ne jamais mettre un joker CORS avec credentials. Le proxy Vite n’existe qu’en développement. Un backend réellement cross-site requiert une revue cookies/CSRF hors de cette livraison. Les limitations de débit multi-instance, MongoDB replica set, sauvegardes et SMTP sont des responsabilités d’exploitation backend.
+## Publications statiques (CMS Markdown)
+
+Les contenus éditoriaux peuvent être publiés sans créer de document MongoDB ni de compte utilisateur. Ils sont chargés à la compilation depuis `src/content/static/*.md`. Un profil virtuel est créé à partir des champs `author`, `authorName` et `authorBio` ; par exemple `static_mnemo`. Le fil et le profil listent automatiquement les fichiers dont `draft` ne vaut pas `true`.
+
+Exemple de fichier :
+
+```md
+---
+slug: listes-python
+author: static_mnemo
+authorName: Mnemo
+authorBio: Cours préparés par l’équipe.
+course: Python
+title: Les listes en Python
+description: Comprendre les listes.
+subject: Programmation
+level: Débutant
+draft: false
+---
+
+## Définition
+
+Une liste conserve plusieurs valeurs ordonnées.
+
+## Cartes
+
+Q: Comment lire le premier élément ?
+A: Avec `liste[0]`.
+
+Q: Que fait append ?
+A: Ajoute une valeur à la fin.
+```
+
+`slug` définit les routes `/static/:slug` et `/static/:slug/study`. Le `course` regroupe les paquets sur le profil auteur. Les cartes utilisent une paire de lignes `Q:` / `A:` séparées par une ligne vide. Le texte avant `## Cartes` est présenté comme contenu du cours. Les révisions statiques sont locales à la page : elles ne créent pas d’historique en base. Une modification Markdown est prise en compte au prochain build frontend. Ce profil et ces publications ne peuvent pas être édités ou supprimés via l’API.
+
+Les fichiers de cours peuvent contenir les sections optionnelles `## Définition`, `## Exemple` et `## À retenir` ; chaque section est affichée seulement si elle contient du texte. Le cours accepte également du texte introductif avant la première section. Le seul contenu obligatoire est au moins une carte `Q:` / `A:`. Les valeurs question et réponse peuvent occuper plusieurs lignes et inclure une image Markdown, par exemple `![Drapeau](https://example.org/drapeau.png)` ; les images HTTP(S) et les chemins locaux absolus sont affichés.
+
+Les utilisateurs peuvent aussi enregistrer un paquet statique depuis sa page. Cette action conserve uniquement le slug comme signet lié à leur utilisateur dans MongoDB ; le contenu et le profil auteur restent dans le Markdown. Les signets statiques apparaissent dans Bibliothèque → Enregistrés.
